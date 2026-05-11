@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOE KYAW AUNG | FULLSTACK DEVELOPER</title>
+    <meta name="description" content="Moe Kyaw Aung - Fullstack Developer | 100+ Projects | React | Node.js | Myanmar">
+    
+    <!-- Tailwind + Custom -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-blue: #00ffff;
+            --neon-purple: #ff00ff;
+            --neon-green: #00ff41;
+            --matrix-green: #00ff88;
+            --cyber-black: #0a0a0a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Orbitron', monospace; 
+            background: var(--cyber-black);
+            overflow-x: hidden;
+            cursor: none;
+        }
+        
+        /* Custom Cursor */
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.1s ease;
+        }
+        
+        /* Matrix Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        
+        /* Glass Effect */
+        .glass {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,255,255,0.1);
+        }
+        
+        /* Neon Glow */
+        .neon-glow {
+            box-shadow: 
+                0 0 5px var(--neon-blue),
+                0 0 10px var(--neon-blue),
+                0 0 20px var(--neon-blue),
+                0 0 40px var(--neon-blue),
+                inset 0 0 10px rgba(0,255,255,0.2);
+        }
+        
+        .neon-glow-green {
+            box-shadow: 
+                0 0 5px var(--neon-green),
+                0 0 10px var(--neon-green),
+                0 0 20px var(--neon-green),
+                0 0 40px var(--neon-green);
+        }
+        
+        /* Glitch Effect */
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        .glitch { animation: glitch 0.3s infinite; }
+        
+        /* Terminal Effect */
+        .terminal {
+            background: rgba(0,0,0,0.9);
+            border: 2px solid var(--neon-green);
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        /* 3D Card Flip */
+        .card-flip {
+            perspective: 1000px;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-flip:hover { transform: rotateY(180deg); }
+        .card-back {
+            position: absolute;
+            backface-visibility: hidden;
+            transform: rotateY(180deg);
+        }
+        
+        /* Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+            animation: scan 3s linear infinite;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { top: -2px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100vh; opacity: 0; }
+        }
+        
+        /* Typing Effect */
+        .typing::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    
+    <!-- Matrix Background -->
+    <canvas id="matrix-canvas"></canvas>
+    
+    <!-- Scanline -->
+    <div class="scanline"></div>
+
+    <!-- Terminal Loading Screen -->
+    <div id="terminal-loading" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div class="terminal p-8 rounded-2xl w-96 mx-4 max-w-full">
+            <div class="flex mb-4">
+                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            </div>
+            <div id="terminal-output" class="text-green-400 font-mono text-sm leading-relaxed space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-40 glass px-8 py-4 rounded-full neon-glow w-11/12 max-w-4xl mx-auto">
+        <div class="flex justify-between items-center">
+            <div class="text-2xl font-black tracking-wider text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text">
+                MOE KYAW AUNG
+            </div>
+            <div class="hidden lg:flex space-x-8 text-sm uppercase tracking-widest font-bold">
+                <a href="#home" class="hover:text-cyan-400 transition-all">HOME</a>
+                <a href="#skills" class="hover:text-purple-400 transition-all">SKILLS</a>
+                <a href="#projects" class="hover:text-green-400 transition-all">PROJECTS</a>
+                <a href="#github" class="hover:text-pink-400 transition-all">GITHUB</a>
+                <a href="#contact" class="hover:text-yellow-400 transition-all">CONTACT</a>
+            </div>
+            <button id="mobile-menu-btn" class="lg:hidden text-2xl neon-glow-green">
+                <i class="fas fa-code"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="fixed top-24 left-0 w-full h-screen bg-black/90 z-30 hidden flex-col items-center justify-center space-y-8 text-2xl font-bold">
+        <a href="#home" class="neon-glow text-cyan-400 hover:text-white transition-all glitch">HOME</a>
+        <a href="#skills" class="neon-glow text-purple-400 hover:text-white transition-all glitch">SKILLS</a>
+        <a href="#projects" class="neon-glow text-green-400 hover:text-white transition-all glitch">PROJECTS</a>
+        <a href="#github" class="neon-glow text-pink-400 hover:text-white transition-all glitch">GITHUB</a>
+        <a href="#contact" class="neon-glow text-yellow-400 hover:text-white transition-all glitch">CONTACT</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center justify-center pt-32 px-8">
+        <div class="text-center max-w-4xl mx-auto space-y-12">
+            <!-- 3D Profile Card -->
+            <div class="card-flip w-80 h-80 mx-auto glass rounded-3xl p-8 neon-glow relative overflow-hidden">
+                <img src="https://res.cloudinary.com/dye5qpwii/image/upload/w_300,h_300,c_fill,r_max/v1778527878/IMG_20260430_053105_uef0yr.png" 
+                     alt="Moe Kyaw Aung" class="w-full h-full rounded-2xl object-cover absolute inset-0">
+                <div class="card-back absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center p-8">
+                    <div class="text-center">
+                        <div class="text-4xl mb-4">👨‍💻</div>
+                        <div class="text-xl font-bold text-white">FULLSTACK</div>
+                        <div class="text-lg text-cyan-300">DEVELOPER</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Typing Terminal -->
+            <div class="terminal p-8 rounded-3xl max-w-2xl mx-auto neon-glow-green">
+                <div class="text-left">
+                    <div class="text-cyan-400 text-lg mb-4">$ whoami</div>
+                    <div class="text-3xl md:text-5xl font-black bg-gradient-to-r from-cyan-400 via-white to-purple-400 bg-clip-text mb-6">
+                        MOE KYAW AUNG<span class="typing text-green-400 ml-4"></span>
+                    </div>
+                    <div class="text-green-400 text-xl space-y-2">
+                        <div>> Fullstack Developer | Myanmar 🇲🇲</div>
+                        <div>> 100+ Lovable Projects | 25+ GitHub Portfolios</div>
+                        <div>> React | Node.js | Tailwind | Vercel</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                <a href="https://github.com/dev-moe-kyawaung" target="_blank" 
+                   class="px-12 py-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-bold uppercase tracking-widest rounded-full neon-glow text-lg hover:scale-110 transition-all shadow-2xl">
+                    <i class="fab fa-github mr-3"></i>GITHUB
+                </a>
+                <a href="https://moekyawaung-dev.lovable.app/" target="_blank" 
+                   class="px-12 py-6 border-2 border-cyan-400 text-cyan-400 font-bold uppercase tracking-widest rounded-full neon-glow text-lg hover:bg-cyan-400 hover:text-black transition-all shadow-2xl">
+                    LOVABLE APPS
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="py-32 px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-6xl font-black text-center mb-20 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent uppercase tracking-widest">
+                TECH STACK
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="glass p-12 rounded-3xl text-center neon-glow hover:scale-110 transition-all group">
+                    <i class="fas fa-laptop-code text-6xl text-cyan-400 mb-6 group-hover:rotate-12 transition-all"></i>
+                    <h3 class="text-2xl font-black mb-4 text-white">FRONTEND</h3>
+                    <div class="text-lg text-cyan-300 space-y-2">
+                        React | Next.js<br>Tailwind | Three.js
+                    </div>
+                </div>
+                <div class="glass p-12 rounded-3xl text-center neon-glow hover:scale-110 transition-all group">
+                    <i class="fas fa-server text-6xl text-purple-400 mb-6 group-hover:rotate-12 transition-all"></i>
+                    <h3 class="text-2xl font-black mb-4 text-white">BACKEND</h3>
+                    <div class="text-lg text-purple-300 space-y-2">
+                        Node.js | Express<br>Python | FastAPI
+                    </div>
+                </div>
+                <div class="glass p-12 rounded-3xl text-center neon-glow-green hover:scale-110 transition-all group">
+                    <i class="fas fa-database text-6xl text-green-400 mb-6 group-hover:rotate-12 transition-all"></i>
+                    <h3 class="text-2xl font-black mb-4 text-white">DATABASE</h3>
+                    <div class="text-lg text-green-300 space-y-2">
+                        MongoDB | PostgreSQL<br>Redis | Firebase
+                    </div>
+                </div>
+                <div class="glass p-12 rounded-3xl text-center neon-glow hover:scale-110 transition-all group">
+                    <i class="fas fa-rocket text-6xl text-pink-400 mb-6 group-hover:rotate-12 transition-all"></i>
+                    <h3 class="text-2xl font-black mb-4 text-white">DEVOPS</h3>
+                    <div class="text-lg text-pink-300 space-y-2">
+                        Vercel | Netlify<br>Docker | GitHub
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-32 px-8 bg-black/30">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-6xl font-black text-center mb-20 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent uppercase tracking-widest">
+                LIVE PROJECTS
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <a href="https://moekyawaung-dev.lovable.app/" target="_blank" class="group glass p-10 rounded-3xl neon-glow hover:scale-110 transition-all overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl mb-6 group-hover:scale-110 transition-all"></div>
+                    <h3 class="text-2xl font-black mb-4 text-white">DEV PORTFOLIO</h3>
+                    <p class="text-cyan-300 mb-6">Primary development showcase</p>
+                    <div class="flex items-center text-green-400 font-bold text-xl">
+                        <i class="fas fa-external-link-alt mr-3"></i>LIVE →
+                    </div>
+                </a>
+                <!-- Add more project cards similarly -->
+            </div>
+        </div>
+    </section>
+
+    <!-- GitHub Collections -->
+    <section id="github" class="py-32 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-6xl font-black text-center mb-20 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent uppercase tracking-widest">
+                GITHUB MATRIX
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <a href="https://Moekyawaung-mm.github.io/" target="_blank" class="glass p-8 rounded-2xl text-center neon-glow hover:scale-110 transition-all">
+                    <div class="text-3xl mb-4">💻</div>
+                    <div class="font-black text-lg">MAIN PORTFOLIO</div>
+                </a>
+                <a href="https://moekyawaung-tech.github.io/" target="_blank" class="glass p-8 rounded-2xl text-center neon-glow hover:scale-110 transition-all">
+                    <div class="text-3xl mb-4">⚙️</div>
+                    <div class="font-black text-lg">TECH</div>
+                </a>
+                <!-- Add all your GitHub repos here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Terminal -->
+    <section id="contact" class="py-32 px-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="terminal p-12 rounded-3xl neon-glow-green text-center">
+                <h2 class="text-4xl font-black mb-12 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent uppercase tracking-widest">
+                    CONNECT TERMINAL
+                </h2>
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    <a href="mailto:moekyawaung@programmer.net" class="glass p-8 rounded-2xl neon-glow hover:scale-105 transition-all block">
+                        <div class="text-2xl mb-4">$ moekyawaung@programmer.net</div>
+                        <div class="text-green-400 font-bold">PRIMARY EMAIL</div>
+                    </a>
+                    <a href="mailto:moekyawaung@technologist.com" class="glass p-8 rounded-2xl neon-glow hover:scale-105 transition-all block">
+                        <div class="text-2xl mb-4">$ moekyawaung@technologist.com</div>
+                        <div class="text-green-400 font-bold">TECH EMAIL</div>
+                    </a>
+                </div>
+                <a href="https://lovable.dev/invite/ZVLZ2S5" target="_blank" 
+                   class="block w-full bg-gradient-to-r from-green-500 to-cyan-500 text-black font-black py-8 px-12 rounded-2xl text-2xl uppercase tracking-widest neon-glow-green hover:scale-105 transition-all shadow-2xl">
+                    JOIN LOVABLE WORKSPACE 🚀
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Matrix Rain Background
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const matrix = "01开发者代码编程开发者代码编程开发者代码编程".split('');
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10,10,10,0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff88';
+            ctx.font = `${fontSize}px monospace`;
+            
+            drops.forEach((y, i) => {
+                const text = matrix[Math.floor(Math.random() * matrix.length)];
+                ctx.fillText(text, i * fontSize, y * fontSize);
+                
+                if (y * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 50);
+
+        // Custom Cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Terminal Loading Animation
+        const terminalLines = [
+            'Initializing developer matrix...',
+            'Loading 100+ Lovable projects...',
+            'Syncing 25+ GitHub portfolios...',
+            'React/Node.js stack ready...',
+            'Myanmar developer online!',
+            'Portfolio deployed! 🚀'
+        ];
+        let lineIndex = 0;
+        const terminalOutput = document.getElementById('terminal-output');
+        
+        function typeLine() {
+            if (lineIndex < terminalLines.length) {
+                const line = terminalLines[lineIndex];
+                let i = 0;
+                const typeInterval = setInterval(() => {
+                    terminalOutput.innerHTML += line[i] || '';
+                    i++;
+                    if (i > line.length) {
+                        clearInterval(typeInterval);
+                        terminalOutput.innerHTML += '<br>';
+                        lineIndex++;
+                        setTimeout(typeLine, 500);
+                    }
+                }, 50);
+            } else {
+                setTimeout(() => {
+                    document.getElementById('terminal-loading').style.opacity = '0';
+                    setTimeout(() => document.getElementById('terminal-loading').remove(), 500);
+                }, 1000);
+            }
+        }
+        typeLine();
+
+        // Mobile Menu
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelector(anchor.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Typing Effect
+        const typingElement = document.querySelector('.typing');
+        const roles = [' FULLSTACK', ' | REACT', ' | NODE.JS', ' | MYANMAR 🇲🇲'];
+        let roleIndex = 0, charIndex = 0, isDeleting = false;
+        
+        function typeRole() {
+            const currentRole = roles[roleIndex];
+            if (isDeleting) {
+                typingElement.textContent = currentRole.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typingElement.textContent = currentRole.substring(0, charIndex + 1);
+                charIndex++;
+            }
+            
+            let speed = isDeleting ? 30 : 100;
+            if (!isDeleting && charIndex === currentRole.length) {
+                speed = 1000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                roleIndex = (roleIndex + 1) % roles.length;
+                speed = 500;
+            }
+            setTimeout(typeRole, speed);
+        }
+        typeRole();
+
+        // Resize Canvas
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
